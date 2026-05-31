@@ -176,7 +176,7 @@ URL Parameter > Theme Default > System Fallback
 | `hide_stats`      | `boolean` | No         | `false`                        | Hides the bottom row displaying Current Streak, Annual Sync Total, and Peak Streak stats when set to `true` or `1`.                                                       |
 | `tz`              | `string`  | No         | Omitted = UTC                  | IANA timezone (e.g. `Asia/Kolkata`, `America/New_York`) — aligns "today" with the user local midnight. Note: `?tz=UTC` is valid but cached separately from omitting `tz`. |
 | `lang`            | `string`  | No         | `en`                           | Language code for labels (`en`, `es`, `hi`, `fr`, `pt`, `ko`, `ja`, `de`, `zh`)                                                                                           |
-| `view`            | `string`  | No         | `default`                      | Rendering mode: `default` (3D Monolith) or `monthly` (Compact monthly stats)                                                                                              |
+| `view`            | `string`  | No         | `default`                      | Rendering mode: `default` (3D Monolith), `monthly` (Compact monthly stats), or `heatmap` (flat 2D contribution heatmap)                                                   |
 | `delta_format`    | `string`  | No         | `percent`                      | Format for month-over-month delta in monthly view: `percent` (e.g. +12%), `absolute` (e.g. +15 commits), or `both`                                                        |
 | `width`           | `number`  | No         | `300`                          | Custom width for the SVG canvas (currently only applies to `view=monthly`)                                                                                                |
 | `height`          | `number`  | No         | `120`                          | Custom height for the SVG canvas (currently only applies to `view=monthly`)                                                                                               |
@@ -319,6 +319,14 @@ Explore some of the built-in CommitPulse themes and quickly copy the style you l
 <!-- Gradient + shading for extra depth -->
 
 ![](https://commitpulse.vercel.app/api/streak?user=jhasourav07&gradient=true&shading=true)
+
+<!-- GitHub-style Heatmap View -->
+
+![](https://commitpulse.vercel.app/api/streak?user=jhasourav07&view=heatmap)
+
+<!-- Heatmap with Neon theme -->
+
+![](https://commitpulse.vercel.app/api/streak?user=jhasourav07&view=heatmap&theme=neon)
 ```
 
 ---

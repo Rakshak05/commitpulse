@@ -9,6 +9,7 @@ import {
   generateSVG,
   generateMonthlySVG,
   generateVersusSVG,
+  generateHeatmapSVG,
 } from '@/lib/svg/generator';
 import { getSecondsUntilUTCMidnight, getSecondsUntilMidnightInTimezone } from '@/utils/time';
 import type { BadgeParams } from '@/types';
@@ -197,6 +198,9 @@ export async function GET(request: Request) {
         getMonthlyReferenceDate(year, timezone)
       );
       svg = generateMonthlySVG(stats, params);
+    } else if (view === 'heatmap') {
+      const stats = calculateStreak(calendar, timezone, undefined, grace);
+      svg = generateHeatmapSVG(stats, params, calendar);
     } else if (versus && versusCalendar) {
       const stats1 = calculateStreak(calendar, timezone, undefined, grace);
       const stats2 = calculateStreak(versusCalendar, timezone, undefined, grace);

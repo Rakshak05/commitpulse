@@ -190,7 +190,7 @@ export const streakParamsSchema = z.object({
   hide_stats: z.string().optional().transform(toBooleanFlag),
   lang: z.enum(supportedLanguages).catch('en').default('en'),
   // Unknown view values fall back to the default dashboard view.
-  view: z.enum(['default', 'monthly']).catch('default').default('default'),
+  view: z.enum(['default', 'monthly', 'heatmap']).catch('default').default('default'),
   // Invalid delta formats fall back to percentage mode.
   delta_format: z.enum(['percent', 'absolute', 'both']).catch('percent').default('percent'),
   width: dimensionParam('width', 100, 1200),
