@@ -1061,3 +1061,31 @@ describe('streakParamsSchema user maxLength validation boundaries (Variation 3)'
     expect(parseResult.success).toBe(true);
   });
 });
+
+/* ==========================================================================
+ * DATE PARAMETER — QUERY VALIDATION BOUNDARIES (VARIATION 4)
+ * ========================================================================== */
+
+describe('streakParamsSchema — date query validation boundaries (Variation 4)', () => {
+  it('rejects an invalid date format like "2026-15-40"', () => {
+    const result = streakParamsSchema.safeParse({
+      user: 'octocat',
+      date: '2026-15-40',
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const messages = result.error.issues.map((i) => i.message).join(' ');
+      expect(messages).toContain('Invalid "date" format. Use ISO 8601.');
+    }
+  });
+
+  it('accepts a valid ISO8601 date', () => {
+    const result = streakParamsSchema.safeParse({
+      user: 'octocat',
+      date: '2026-05-30',
+    });
+
+    expect(result.success).toBe(true);
+  });
+});

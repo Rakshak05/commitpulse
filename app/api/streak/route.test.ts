@@ -650,6 +650,14 @@ describe('GET /api/streak', () => {
         expect(response.status).toBe(400);
         expect(body.details.fieldErrors.date[0]).toContain('Invalid "date" format');
       });
+
+      it('returns 400 when an invalid ISO8601 calendar date format like "2026-15-40" is supplied (Variation 4)', async () => {
+        const response = await GET(makeRequest({ user: 'octocat', date: '2026-15-40' }));
+        const body = await response.json();
+
+        expect(response.status).toBe(400);
+        expect(body.details.fieldErrors.date[0]).toContain('Invalid "date" format. Use ISO 8601.');
+      });
     });
   });
 
