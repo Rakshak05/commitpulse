@@ -710,17 +710,18 @@ export async function getOrgDashboardData(orgName: string, options: FetchOptions
     throw new Error('This endpoint is strictly for organizations.');
   if (membersOrError instanceof Error) throw membersOrError;
 
-  const members: string[] = membersOrError;
-  const calendars = (
-    await Promise.all(
-      members.map((m) =>
-        fetchGitHubContributions(m, options)
-          .then((d) => d.calendar)
-          .catch(() => null)
-      )
-    )
-  ).filter((c): c is ContributionCalendar => c !== null);
+  const members = membersOrError;
 
+  // Fetch calendars for all members concurrently with capped concurrency to avoid 429s/timeouts
+  const calendars = (
+    await runCappedConcurrency(members, 5, (member) =>
+      fetchGitHubContributions(member, options)
+        .then((data) => data.calendar)
+        .catch(() => null)
+    )
+  ).filter((c: ContributionCalendar | null) => c !== null) as ContributionCalendar[];
+
+  // Create the Mega-City
   const aggregatedCalendar = aggregateCalendars(calendars);
   const streakStats = calculateStreak(aggregatedCalendar);
   const totalStars = reposData.reduce((acc, r) => acc + r.stargazers_count, 0);
@@ -1224,4 +1225,36 @@ export async function getWrappedData(
     weekendRatio,
     topLanguage,
   };
+}
+
+/**
+ * Run tasks concurrently with a maximum limit on active promises.
+ */
+export async function runCappedConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let currentIndex = 0;
+
+  async function worker(): Promise<void> {
+    while (currentIndex < items.length) {
+      const index = currentIndex++;
+      try {
+        results[index] = await fn(items[index]);
+      } catch (err) {
+        results[index] = null as unknown as R;
+      }
+    }
+  }
+
+  const workers: Promise<void>[] = [];
+  const workerCount = Math.min(limit, items.length);
+  for (let i = 0; i < workerCount; i++) {
+    workers.push(worker());
+  }
+
+  await Promise.all(workers);
+  return results;
 }
