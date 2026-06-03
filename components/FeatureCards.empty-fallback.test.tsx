@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { describe, expect, it, vi } from 'vitest';
@@ -55,12 +55,20 @@ describe('FeatureCards - empty fallback', () => {
   });
 
   it('renders FeatureCardsSection empty fallback heading', () => {
-    render(<FeatureCardsSection><div>Child</div></FeatureCardsSection>);
+    render(
+      <FeatureCardsSection>
+        <div>Child</div>
+      </FeatureCardsSection>
+    );
     expect(screen.getByText('Why CommitPulse?')).toBeInTheDocument();
   });
 
   it('renders FeatureCardsSection with children safely', () => {
-    render(<FeatureCardsSection><div>Child Node</div></FeatureCardsSection>);
+    render(
+      <FeatureCardsSection>
+        <div>Child Node</div>
+      </FeatureCardsSection>
+    );
     expect(screen.getByText('Child Node')).toBeInTheDocument();
   });
 });
