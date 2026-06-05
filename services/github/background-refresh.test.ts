@@ -54,7 +54,7 @@ describe('BackgroundRefresh Unit Tests', () => {
       service.triggerRefresh('  TestUser  ');
 
       expect(service.isJobActive('testuser')).toBe(true);
-      expect(getFullDashboardData).toHaveBeenCalledWith('  TestUser  ', { bypassCache: true });
+      expect(getFullDashboardData).toHaveBeenCalledWith('  TestUser  ', { forceRefresh: true });
 
       // Allow promise microtask to resolve
       await vi.runAllTimersAsync();
