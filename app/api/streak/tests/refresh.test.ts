@@ -12,6 +12,15 @@ vi.mock('../../../../utils/time', () => ({
   getSecondsUntilMidnightInTimezone: vi.fn(),
 }));
 
+vi.mock('../../../../lib/github', () => ({
+  fetchGitHubContributions: vi.fn(),
+  getOrgDashboardData: vi.fn(),
+  getCircuitTelemetry: vi.fn().mockReturnValue({
+    isOpen: false,
+    openUntil: 0,
+  }),
+}));
+
 import { fetchGitHubContributions } from '../../../../lib/github';
 import { getSecondsUntilUTCMidnight } from '../../../../utils/time';
 import type { ExtendedContributionData } from '../../../../types';

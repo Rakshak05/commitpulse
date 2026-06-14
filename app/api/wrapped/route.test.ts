@@ -6,6 +6,15 @@ vi.mock('../../../lib/github', () => ({
   fetchGitHubContributions: vi.fn(),
 }));
 
+vi.mock('../../../lib/github', () => ({
+  getWrappedData: vi.fn(),
+  fetchGitHubContributions: vi.fn(),
+  getCircuitTelemetry: vi.fn().mockReturnValue({
+    isOpen: false,
+    openUntil: 0,
+  }),
+}));
+
 import { getWrappedData, fetchGitHubContributions } from '../../../lib/github';
 import type { ContributionCalendar } from '../../../types';
 import type { WrappedStats } from '../../../types/dashboard';
