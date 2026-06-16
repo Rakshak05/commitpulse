@@ -102,7 +102,7 @@ describe('GET /api/wrapped', () => {
     it('returns 200 with SVG content type', async () => {
       const response = await GET(makeRequest({ user: 'octocat' }));
       expect(response.status).toBe(200);
-      expect(response.headers.get('Content-Type')).toBe('image/svg+xml');
+      expect(response.headers.get('Content-Type')).toBe('image/svg+xml; charset=utf-8');
     });
 
     it('returns a well-formed SVG body representing Wrapped stats', async () => {
@@ -203,7 +203,7 @@ describe('GET /api/wrapped', () => {
       vi.mocked(getWrappedData).mockRejectedValue(new Error('GitHub is down'));
       const response = await GET(makeRequest({ user: 'octocat' }));
       expect(response.status).toBe(500);
-      expect(response.headers.get('Content-Type')).toBe('image/svg+xml');
+      expect(response.headers.get('Content-Type')).toBe('image/svg+xml; charset=utf-8');
       const body = await response.text();
       expect(body).toContain('Something went wrong. Please try again later.');
     });
@@ -212,7 +212,7 @@ describe('GET /api/wrapped', () => {
       vi.mocked(getWrappedData).mockRejectedValue(new Error('User not found'));
       const response = await GET(makeRequest({ user: 'not-real-user' }));
       expect(response.status).toBe(404);
-      expect(response.headers.get('Content-Type')).toBe('image/svg+xml');
+      expect(response.headers.get('Content-Type')).toBe('image/svg+xml; charset=utf-8');
       const body = await response.text();
       expect(body).toContain('NOT FOUND');
     });

@@ -296,7 +296,7 @@ describe('GET /api/streak', () => {
     it('returns 200 with SVG content type', async () => {
       const response = await GET(makeRequest({ user: 'octocat' }));
       expect(response.status).toBe(200);
-      expect(response.headers.get('Content-Type')).toBe('image/svg+xml');
+      expect(response.headers.get('Content-Type')).toBe('image/svg+xml; charset=utf-8');
     });
 
     it('returns a well-formed SVG body', async () => {
@@ -311,7 +311,7 @@ describe('GET /api/streak', () => {
     it('returns valid SVG when mode=loc is given', async () => {
       const response = await GET(makeRequest({ user: 'octocat', mode: 'loc' }));
       expect(response.status).toBe(200);
-      expect(response.headers.get('Content-Type')).toBe('image/svg+xml');
+      expect(response.headers.get('Content-Type')).toBe('image/svg+xml; charset=utf-8');
       const body = await response.text();
       expect(body).toContain('<svg');
     });
@@ -742,17 +742,17 @@ describe('GET /api/streak', () => {
 
     it('returns SVG content type for theme=neon', async () => {
       const response = await GET(makeRequest({ user: 'octocat', theme: 'neon' }));
-      expect(response.headers.get('Content-Type')).toBe('image/svg+xml');
+      expect(response.headers.get('Content-Type')).toBe('image/svg+xml; charset=utf-8');
     });
 
     it('returns SVG content type for theme=dracula', async () => {
       const response = await GET(makeRequest({ user: 'octocat', theme: 'dracula' }));
-      expect(response.headers.get('Content-Type')).toBe('image/svg+xml');
+      expect(response.headers.get('Content-Type')).toBe('image/svg+xml; charset=utf-8');
     });
 
     it('returns SVG content type for theme=auto', async () => {
       const response = await GET(makeRequest({ user: 'octocat', theme: 'auto' }));
-      expect(response.headers.get('Content-Type')).toBe('image/svg+xml');
+      expect(response.headers.get('Content-Type')).toBe('image/svg+xml; charset=utf-8');
     });
 
     it('returns auto-theme SVG markup with dark-mode CSS variables when theme=auto', async () => {
@@ -874,7 +874,7 @@ describe('GET /api/streak', () => {
       const response = await GET(makeRequest({ user: 'octocat' }));
 
       expect(response.status).toBe(500);
-      expect(response.headers.get('Content-Type')).toBe('image/svg+xml');
+      expect(response.headers.get('Content-Type')).toBe('image/svg+xml; charset=utf-8');
     });
 
     it('embeds the thrown error message in the error SVG', async () => {

@@ -63,7 +63,7 @@ describe('GET /api/streak — languages (lang) parameter', () => {
     const response = await GET(makeRequest({ user: 'octocat', lang: 'de' }));
 
     expect(response.status).toBe(200);
-    expect(response.headers.get('Content-Type')).toBe('image/svg+xml');
+    expect(response.headers.get('Content-Type')).toBe('image/svg+xml; charset=utf-8');
   });
 
   it('returns a well-formed SVG body when lang=pt is given', async () => {
