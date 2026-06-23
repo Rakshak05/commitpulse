@@ -1,26 +1,32 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, waitFor, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import EducationalCurveTracker from './EducationalCurveTracker';
 
-// Safely mock global fetch without using 'any'
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 describe('EducationalCurveTracker Component', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
-  it('renders the animated pulse skeleton initially', () => {
-    // FIX: Provide a resolving promise so the CI runner doesn't hang forever.
-    // The initial render is synchronous, so we will still catch the skeleton state!
+  afterEach(() => {
+    cleanup(); // Completely wipe the DOM between tests
+  });
+
+  it('renders the animated pulse skeleton initially', async () => {
     mockFetch.mockResolvedValueOnce({
       json: async () => ({ success: true, data: null }),
     });
 
     const { container } = render(<EducationalCurveTracker username="jalisa2106" />);
-    // Check for the skeleton container class
+    // Check for the skeleton synchronously
     expect(container.querySelector('.animate-pulse')).toBeInTheDocument();
+
+    // FIX: Wait for the component to finish loading so the promise doesn't bleed into Test 2
+    await waitFor(() => {
+      expect(container.firstChild).toBeNull();
+    });
   });
 
   it('renders the data successfully after API fetch', async () => {
@@ -39,12 +45,13 @@ describe('EducationalCurveTracker Component', () => {
 
     render(<EducationalCurveTracker username="jalisa2106" />);
 
-    // Wait for the skeleton to disappear and text to appear
+    // Wait for the data to mount
     await waitFor(() => {
       expect(screen.getByText('Applied AI & Data Mining')).toBeInTheDocument();
-      expect(screen.getByText('14')).toBeInTheDocument(); // The active days count
-      expect(screen.getByText('Active Study Days')).toBeInTheDocument();
     });
+
+    expect(screen.getByText('14')).toBeInTheDocument();
+    expect(screen.getByText('Active Study Days')).toBeInTheDocument();
   });
 
   it('fails silently/renders nothing on API error', async () => {
