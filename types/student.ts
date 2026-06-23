@@ -1,3 +1,5 @@
+import { AcademicDomain } from '@/lib/educational/syllabus-mapper';
+
 export interface ParsedResume {
   name: string;
   email: string;
