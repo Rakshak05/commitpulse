@@ -1,5 +1,6 @@
 import React from 'react';
 import { truncateUsername, getUsernameFontSize } from '../generator';
+import DOMPurify from 'dompurify';
 
 export interface VersusPanelProps {
   user1: string;
@@ -28,7 +29,7 @@ export interface VersusPanelProps {
  * User-controlled text is sanitized before fragment generation.
  */
 function createSafeSvgMarkup(svg: string) {
-  return { __html: svg };
+  return { __html: DOMPurify.sanitize(svg) };
 }
 
 export const VersusPanel: React.FC<VersusPanelProps> = ({
