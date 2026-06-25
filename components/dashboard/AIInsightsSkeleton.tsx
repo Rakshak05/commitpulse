@@ -4,7 +4,7 @@ export default function AIInsightsSkeleton() {
       role="status"
       aria-busy="true"
       aria-label="Loading AI Insights"
-      className="p-6 rounded-xl bg-zinc-50 dark:bg-[#0a0a0a] border border-black/5 dark:border-[rgba(255,255,255,0.08)]"
+      className="p-6 rounded-xl bg-zinc-50 dark:bg-[#0a0a0a] border border-black/5 dark:border-[rgba(255,255,255,0.08)] overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center gap-2.5 mb-5">

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import AIInsightsSkeleton from './AIInsightsSkeleton';
 
 describe('AIInsightsSkeleton theme contrast', () => {
-  it('renders the skeleton container in dark theme environment', () => {
+  it('renders the skeleton container with theme-aware styles', () => {
     document.documentElement.classList.add('dark');
 
     const { container } = render(<AIInsightsSkeleton />);
