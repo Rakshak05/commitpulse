@@ -16,6 +16,7 @@ import {
   sanitizeFont,
   sanitizeHexColor,
   sanitizeRadius,
+  sanitizeDimension,
   sanitizeGoogleFontUrl,
   getLuminance,
   parseGradientStops,
@@ -1211,8 +1212,8 @@ export function generateMonthlySVG(stats: MonthlyStats, params: BadgeParams): st
   const radius = sanitizeRadius(params.radius, 8);
   const labels = getLabels(params.lang);
 
-  const width = params.width || 300;
-  const height = params.height || 120;
+  const width = sanitizeDimension(params.width, 300, 100, 1200);
+  const height = sanitizeDimension(params.height, 120, 80, 800);
 
   const googleFontUrlPart =
     sanitizedFont && !isPredefinedFont ? sanitizeGoogleFontUrl(sanitizedFont) : null;
@@ -1310,8 +1311,8 @@ export function generateWrappedSVG(
   const statsFont = selectedFont || '"Space Grotesk", sans-serif';
   const radius = sanitizeRadius(params.radius, 8);
 
-  const width = params.width || 420;
-  const height = params.height || 260;
+  const width = sanitizeDimension(params.width, 420, 100, 1200);
+  const height = sanitizeDimension(params.height, 260, 80, 800);
 
   const googleFontUrlPart =
     sanitizedFont && !isPredefinedFont ? sanitizeGoogleFontUrl(sanitizedFont) : null;
@@ -1554,8 +1555,8 @@ function generateAutoThemeMonthlySVG(stats: MonthlyStats, params: BadgeParams): 
   const radius = sanitizeRadius(params.radius, 8);
   const labels = getLabels(params.lang);
 
-  const width = params.width || 300;
-  const height = params.height || 120;
+  const width = sanitizeDimension(params.width, 300, 100, 1200);
+  const height = sanitizeDimension(params.height, 120, 80, 800);
 
   const commitsLabel =
     params.mode === 'loc' ? 'LINES THIS MONTH (EST.)' : labels.COMMITS_THIS_MONTH;
@@ -2487,9 +2488,8 @@ export function generatePulseSVG(
   const googleFontsImport = googleFontUrlPart
     ? `@import url('https://fonts.googleapis.com/css2?family=${googleFontUrlPart}&amp;display=swap');`
     : '';
-
-  const width = params.width || 800;
-  const height = params.height || 170;
+  const width = sanitizeDimension(params.width, 800, 100, 1200);
+  const height = sanitizeDimension(params.height, 170, 80, 800);
 
   const days: number[] = [];
   calendar.weeks.forEach((week) => {
@@ -2672,10 +2672,8 @@ function generateAutoThemePulseSVG(
   const googleFontsImport = googleFontUrlPart
     ? `@import url('https://fonts.googleapis.com/css2?family=${googleFontUrlPart}&amp;display=swap');`
     : '';
-
-  const width = params.width || 800;
-  const height = params.height || 170;
-
+  const width = sanitizeDimension(params.width, 800, 100, 1200);
+  const height = sanitizeDimension(params.height, 170, 80, 800);
   const days: number[] = [];
   calendar.weeks.forEach((week) => {
     week.contributionDays.forEach((day) => {
@@ -2897,8 +2895,8 @@ function renderSkylineSVG(
   const parsedRadius = Number(params.radius);
   const radius = Math.max(0, Math.min(Number.isNaN(parsedRadius) ? 8 : parsedRadius, 50));
 
-  const width = params.width || 800;
-  const height = params.height || 260;
+  const width = sanitizeDimension(params.width, 800, 100, 1200);
+  const height = sanitizeDimension(params.height, 260, 80, 800);
 
   const weeklyContributions: number[] = [];
   const weeks = calendar.weeks;
@@ -3488,8 +3486,8 @@ export function generateActivityGraphSVG(
   const parsedRadius = Number(params.radius);
   const radius = Math.max(0, Math.min(Number.isNaN(parsedRadius) ? 8 : parsedRadius, 50));
 
-  const width = params.width || 800;
-  const height = params.height || 220;
+  const width = sanitizeDimension(params.width, 800, 100, 1200);
+  const height = sanitizeDimension(params.height, 220, 80, 800);
 
   const { pathD, areaPathD, trendPathD, peakX, peakY, peakCount, peakDate, days, totalCount } =
     _buildActivityGraphData(calendar, params, width, height);
@@ -3549,8 +3547,8 @@ function generateAutoThemeActivityGraphSVG(
   const parsedRadius = Number(params.radius);
   const radius = Math.max(0, Math.min(Number.isNaN(parsedRadius) ? 8 : parsedRadius, 50));
 
-  const width = params.width || 800;
-  const height = params.height || 220;
+  const width = sanitizeDimension(params.width, 800, 100, 1200);
+  const height = sanitizeDimension(params.height, 220, 80, 800);
 
   const { pathD, areaPathD, trendPathD, peakX, peakY, peakCount, peakDate, days, totalCount } =
     _buildActivityGraphData(calendar, params, width, height);
