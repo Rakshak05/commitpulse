@@ -1,13 +1,30 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { render } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
 import ReturnToTop from './ReturnToTop';
+
+// We define a mock function for useReducedMotion to verify integration behavior dynamically
+const mockUseReducedMotion = vi.fn().mockReturnValue(false);
 
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
   motion: {
-    button: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
-      <button {...props}>{children}</button>
+    button: ({
+      children,
+      whileHover,
+      whileTap,
+      ...props
+    }: {
+      children: React.ReactNode;
+      [key: string]: unknown;
+    }) => (
+      <button
+        data-while-hover={whileHover ? JSON.stringify(whileHover) : undefined}
+        data-while-tap={whileTap ? JSON.stringify(whileTap) : undefined}
+        {...props}
+      >
+        {children}
+      </button>
     ),
     circle: (props: { [key: string]: unknown }) => <circle {...props} />,
     div: ({ children, ...props }: { children: React.ReactNode; [key: string]: unknown }) => (
@@ -17,7 +34,7 @@ vi.mock('framer-motion', () => ({
       <span {...props}>{children}</span>
     ),
   },
-  useReducedMotion: () => false,
+  useReducedMotion: () => mockUseReducedMotion(),
   useScroll: () => ({ scrollYProgress: 0 }),
   useSpring: (value: unknown) => value,
   useTransform: () => 0,
@@ -34,21 +51,20 @@ interface ScrollPositionRecord {
   timestamp: number;
 }
 
+// A stub cache service using browser-native localStorage for integration testing
 class ScrollCacheService {
-  private cache = new Map<string, ScrollPositionRecord>();
-  private remoteDb = new Map<string, ScrollPositionRecord>();
-
   public dbCallCount = 0;
   public cacheCallCount = 0;
+  private db = new Map<string, ScrollPositionRecord>();
 
   constructor(initialDbRecords: ScrollPositionRecord[] = []) {
     initialDbRecords.forEach((record) => {
-      this.remoteDb.set(record.key, record);
+      this.db.set(record.key, record);
     });
   }
 
   public reset() {
-    this.cache.clear();
+    localStorage.clear();
     this.dbCallCount = 0;
     this.cacheCallCount = 0;
   }
@@ -58,8 +74,9 @@ class ScrollCacheService {
     timeoutMs: number = 5000
   ): Promise<ScrollPositionRecord> {
     this.cacheCallCount++;
-    if (this.cache.has(key)) {
-      return this.cache.get(key)!;
+    const cached = localStorage.getItem(key);
+    if (cached) {
+      return JSON.parse(cached);
     }
 
     this.dbCallCount++;
@@ -68,24 +85,24 @@ class ScrollCacheService {
       throw new Error('Timeout: Remote database took too long to respond');
     }
 
-    const record = this.remoteDb.get(key);
+    const record = this.db.get(key);
     if (!record) {
       throw new Error(`Scroll position record not found for: ${key}`);
     }
 
-    // Simulate async network latency
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    // Keep the method async without introducing real-time delays in unit tests
+    await Promise.resolve();
 
     return record;
   }
 
   public async syncRemoteToLocal(key: string): Promise<void> {
     const record = await this.fetchScrollPosition(key);
-    this.cache.set(key, record);
+    localStorage.setItem(key, JSON.stringify(record));
   }
 
   public setLocalCache(key: string, record: ScrollPositionRecord) {
-    this.cache.set(key, record);
+    localStorage.setItem(key, JSON.stringify(record));
   }
 }
 
@@ -134,40 +151,93 @@ describe('ReturnToTop - Asynchronous Service Layer Mocking & Local Cache Stubs (
 
   // Case 1: Mock standard asynchronous imports and databases using stubs
   it('Case 1: Mock standard asynchronous imports and databases using stubs and verify scrolling state loading', async () => {
-    const { container } = render(<ReturnToTop />);
-    expect(container).toBeDefined();
-
+    // Verify standard async database retrieval using the stub
     const result = await service.fetchScrollPosition('scroll-last-position');
     expect(result).toHaveProperty('key', 'scroll-last-position');
     expect(result).toHaveProperty('scrollY', 750);
     expect(result.behavior).toBe('smooth');
+
+    // Target observable ReturnToTop behaviors (visibility threshold, scrollTo behaviors)
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 750,
+    });
+
+    const scrollToSpy = vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+
+    // Test normal motion mode
+    mockUseReducedMotion.mockReturnValue(false);
+    const { rerender } = render(<ReturnToTop />);
+    fireEvent.scroll(window);
+
+    const button = screen.getByRole('button', { name: /back to top/i });
+    expect(button).toBeInTheDocument();
+    expect(button.getAttribute('data-while-hover')).toContain('y');
+
+    fireEvent.click(button);
+    expect(scrollToSpy).toHaveBeenCalledWith({
+      top: 0,
+      behavior: 'smooth',
+    });
+
+    scrollToSpy.mockClear();
+
+    // Test reduced motion mode
+    mockUseReducedMotion.mockReturnValue(true);
+    rerender(<ReturnToTop />);
+    fireEvent.click(button);
+    expect(scrollToSpy).toHaveBeenCalledWith({
+      top: 0,
+      behavior: 'auto',
+    });
   });
 
   // Case 2: Test service loading paths to ensure pending state overlays render
   it('Case 2: Test service loading paths to ensure pending state overlays render', async () => {
-    let isPending = true;
-
-    const fetchPromise = service.fetchScrollPosition('scroll-last-position').then((res) => {
-      isPending = false;
-      return res;
+    // Initially scrolled at 0 (pending/hidden state)
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 0,
     });
 
-    expect(isPending).toBe(true);
+    render(<ReturnToTop />);
 
-    await fetchPromise;
+    // Initially, the button is not visible
+    expect(screen.queryByRole('button', { name: /back to top/i })).toBeNull();
 
-    expect(isPending).toBe(false);
+    // Scroll past threshold to trigger visual appearance
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 350,
+    });
+
+    fireEvent.scroll(window);
+
+    // Wait asynchronously for the button to appear in the DOM (loading path resolved)
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /back to top/i })).toBeInTheDocument();
+    });
   });
 
   // Case 3: Assert local cache layers are queried before triggering database retrievals
   it('Case 3: Assert local cache layers are queried before triggering database retrievals', async () => {
     service.setLocalCache('scroll-last-position', mockRecord);
 
+    // Read record and assert it hits cache instead of remote database
     const result = await service.fetchScrollPosition('scroll-last-position');
 
     expect(result).toEqual(mockRecord);
     expect(service.dbCallCount).toBe(0);
     expect(service.cacheCallCount).toBe(1);
+
+    // Verify component integration is unaffected by backend mock layers
+    Object.defineProperty(window, 'scrollY', {
+      configurable: true,
+      value: 350,
+    });
+    fireEvent.scroll(window);
+    render(<ReturnToTop />);
+    expect(screen.getByRole('button', { name: /back to top/i })).toBeInTheDocument();
   });
 
   // Case 4: Verify correct fallback procedures during fake endpoint timeout blocks
@@ -175,8 +245,12 @@ describe('ReturnToTop - Asynchronous Service Layer Mocking & Local Cache Stubs (
     let finalRecord: ScrollPositionRecord;
 
     try {
-      finalRecord = await service.fetchScrollPosition('scroll-last-position', 50);
-    } catch {
+      // Pass a low timeout threshold to force the timeout error to trigger
+      await service.fetchScrollPosition('scroll-last-position', 50);
+      throw new Error('Expected fetchScrollPosition to timeout, but it resolved successfully');
+    } catch (err) {
+      expect(err).toBeInstanceOf(Error);
+      expect((err as Error).message).toMatch(/Timeout:/);
       finalRecord = fallbackRecord;
     }
 
@@ -185,9 +259,11 @@ describe('ReturnToTop - Asynchronous Service Layer Mocking & Local Cache Stubs (
 
   // Case 5: Assert complete cache sync is written on success callbacks
   it('Case 5: Assert complete cache sync is written on success callbacks', async () => {
+    // Trigger remote sync to pull data from DB and save to local storage
     await service.syncRemoteToLocal('scroll-last-position');
     expect(service.dbCallCount).toBe(1);
 
+    // Subsequent retrieval should fetch directly from local storage, without calling DB again
     const result = await service.fetchScrollPosition('scroll-last-position');
     expect(result).toEqual(mockRecord);
     expect(service.dbCallCount).toBe(1);
