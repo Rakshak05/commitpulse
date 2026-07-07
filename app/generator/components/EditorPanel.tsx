@@ -13,7 +13,7 @@ import { FaGithub } from 'react-icons/fa';
 import type { GeneratorState } from '../types';
 import type { ImportedData } from '../utils/githubMapper';
 
-interface EditorPanelProps {
+export interface EditorPanelProps {
   state: GeneratorState;
   onNameChange: (v: string) => void;
   onDescriptionChange: (v: string) => void;
