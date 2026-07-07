@@ -10,19 +10,11 @@ describe('ThemeSelector - TypeScript Compiler Validation & Schema Constraints St
   it('1. TypeScript compiler validation: verifies exported interfaces and prop types', () => {
     // Verify required props
     expectTypeOf<ThemeSelectorProps>().toHaveProperty('theme').toBeString();
-    expectTypeOf<ThemeSelectorProps>()
-      .toHaveProperty('onThemeChange')
-      .toBeFunction()
-      .parameter(0)
-      .toBeString();
+    expectTypeOf<ThemeSelectorProps>().toHaveProperty('onThemeChange').parameter(0).toBeString();
 
     expectTypeOf<StyledSelectProps>().toHaveProperty('id').toBeString();
     expectTypeOf<StyledSelectProps>().toHaveProperty('value').toBeString();
-    expectTypeOf<StyledSelectProps>()
-      .toHaveProperty('onChange')
-      .toBeFunction()
-      .parameter(0)
-      .toBeString();
+    expectTypeOf<StyledSelectProps>().toHaveProperty('onChange').parameter(0).toBeString();
     expectTypeOf<StyledSelectProps>().toHaveProperty('children');
   });
 
@@ -78,7 +70,7 @@ describe('ThemeSelector - TypeScript Compiler Validation & Schema Constraints St
     expectTypeOf<'light'>().toMatchTypeOf<ThemeOption>();
 
     // Invalid literal should not match
-    expectTypeOf<'invalid_theme_literal'>().not.toMatchTypeOf<ThemeKey>();
-    expectTypeOf<'invalid_theme_literal'>().not.toMatchTypeOf<ThemeOption>();
+    expectTypeOf<'invalid_theme_literal'>().not.toEqualTypeOf<ThemeKey>();
+    expectTypeOf<'invalid_theme_literal'>().not.toEqualTypeOf<ThemeOption>();
   });
 });
