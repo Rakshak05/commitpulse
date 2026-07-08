@@ -54,6 +54,7 @@ describe('ContributorsSearch - Timezone Normalization & Calendar Data Boundary A
       render(<ContributorsSearch contributors={mockContributors} />);
       expect(screen.getByPlaceholderText(/Search the collective.../i)).toBeInTheDocument();
       cleanup();
+      vi.restoreAllMocks();
     });
   });
 
@@ -140,9 +141,9 @@ describe('ContributorsSearch - Timezone Normalization & Calendar Data Boundary A
 
     const timeFormatter = new Intl.DateTimeFormat('en-US', {
       timeZone: 'America/New_York',
-      hour: 'numeric',
-      minute: 'numeric',
-      second: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
       hour12: false,
     });
 
