@@ -54,23 +54,23 @@ describe('Timezone normalization & calendar boundary alignment', () => {
     vi.mocked(getCircuitTelemetry).mockReturnValue({ isOpen: false, resetInMs: 0 });
     vi.mocked(getWrappedData).mockResolvedValue(mockWrappedStats);
   });
-it('passes Asia/Kolkata timezone to getWrappedData', async () => {
-  vi.mocked(getWrappedData).mockResolvedValue(mockWrappedStats);
+  it('passes Asia/Kolkata timezone to getWrappedData', async () => {
+    vi.mocked(getWrappedData).mockResolvedValue(mockWrappedStats);
 
-  await GET(
-    makeRequest({
-      user: 'octocat',
-      tz: 'Asia/Kolkata',
-    })
-  );
+    await GET(
+      makeRequest({
+        user: 'octocat',
+        tz: 'Asia/Kolkata',
+      })
+    );
 
-  expect(getWrappedData).toHaveBeenCalledWith(
-    'octocat',
-    expect.any(String),
-    { bypassCache: false },
-    'Asia/Kolkata'
-  );
-});
+    expect(getWrappedData).toHaveBeenCalledWith(
+      'octocat',
+      expect.any(String),
+      { bypassCache: false },
+      'Asia/Kolkata'
+    );
+  });
   it('passes UTC timezone to getWrappedData', async () => {
     vi.mocked(getWrappedData).mockResolvedValue(mockWrappedStats);
 
@@ -87,7 +87,7 @@ it('passes Asia/Kolkata timezone to getWrappedData', async () => {
       { bypassCache: false },
       'UTC'
     );
-});
+  });
   it('calls getWrappedData without timezone when tz is not provided', async () => {
     vi.mocked(getWrappedData).mockClear();
     vi.mocked(getWrappedData).mockResolvedValue(mockWrappedStats);
@@ -105,7 +105,7 @@ it('passes Asia/Kolkata timezone to getWrappedData', async () => {
     expect(getWrappedData).toHaveBeenCalledWith('octocat', expect.any(String), {
       bypassCache: false,
     });
-});
+  });
   it('uses custom year instead of timezone derived year', async () => {
     vi.mocked(getWrappedData).mockClear();
     vi.mocked(getWrappedData).mockResolvedValue(mockWrappedStats);
@@ -124,7 +124,7 @@ it('passes Asia/Kolkata timezone to getWrappedData', async () => {
       { bypassCache: false },
       'Asia/Tokyo'
     );
- });
+  });
   it('passes bypassCache=true when refresh=true is provided', async () => {
     vi.mocked(getWrappedData).mockClear();
     vi.mocked(getWrappedData).mockResolvedValue(mockWrappedStats);
