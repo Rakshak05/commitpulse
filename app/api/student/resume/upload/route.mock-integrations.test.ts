@@ -52,13 +52,13 @@ describe('API Route: Student Resume Upload (Mock Integrations)', () => {
 
   it('1. should test service loading paths to ensure successful parsing returns 200 (mock success)', async () => {
     // Arrange: Mock the async service to succeed
-    const mockParsedData = { 
-      name: 'Priyanuj', 
+    const mockParsedData = {
+      name: 'Priyanuj',
       email: 'test@example.com',
       phone: '1234567890',
       skills: ['React', 'Next.js'],
       education: [],
-      experience: []
+      experience: [],
     };
     vi.mocked(parseResume).mockResolvedValueOnce(mockParsedData);
 
