@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   // Call the original endpoint which returns the SVG text
   const response = await getStreakSvg(request);
 
-  if (!response.ok || response.headers.get('Content-Type') !== 'image/svg+xml') {
+  if (!response.ok || !response.headers.get('Content-Type')?.includes('image/svg+xml')) {
     // Return errors as is
     return response;
   }
@@ -40,9 +40,20 @@ export async function GET(request: Request) {
       headers,
     });
   } catch (err) {
-    return NextResponse.json(
-      { error: 'Failed to convert SVG to PNG', details: String(err) },
-      { status: 500 }
-    );
+    console.error('[streak/png] Failed to convert SVG to PNG:', err);
+    const errorSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="100">
+  <rect width="100%" height="100%" fill="#ffffff"/>
+  <text x="20" y="55" font-family="monospace" font-size="16" fill="red">
+    Failed to render streak image
+  </text>
+</svg>`;
+
+    return new NextResponse(errorSvg, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/svg+xml',
+        'Cache-Control': 'no-store',
+      },
+    });
   }
 }
