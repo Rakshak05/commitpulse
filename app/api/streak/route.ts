@@ -652,7 +652,10 @@ export async function GET(request: Request) {
       svg = generateConstellationSVG(stats, params, calendar);
     } else if (normalizedView === 'radar') {
       const stats = calculateStreak(calendar, timezone, undefined, grace);
-      svg = generateRadarSVG(stats, params, calendar);
+      const hourCounts = await fetchCommitHourDistribution(user, undefined, timezone).catch(
+        () => undefined
+      );
+      svg = generateRadarSVG(stats, params, calendar, hourCounts);
     } else if (normalizedView === 'doughnut' || normalizedView === 'pie') {
       const stats = calculateStreak(calendar, timezone, undefined, grace);
       svg = generateDoughnutSVG(stats, params, calendar);
