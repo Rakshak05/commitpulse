@@ -498,12 +498,7 @@ export function aggregateCalendars(
 /**
  * Chunks contribution days into weekly arrays, with the option to hide weekends.
  */
-/**
- * Chunks contribution days into weekly arrays, with the option to hide weekends.
- */
-/**
- * Chunks contribution days into weekly arrays, with the option to hide weekends.
- */
+
 export function chunkDaysIntoWeeks(
   days?: ContributionDay[] | null,
   hideWeekend: boolean = false
@@ -512,15 +507,22 @@ export function chunkDaysIntoWeeks(
     return [];
   }
 
-  // Filter out null/undefined days and sort chronologically
-  const validDays = days.filter(
-    (day): day is ContributionDay => day !== null && day !== undefined && day.date !== undefined
-  );
+  // Filter out null/undefined days, empty dates, and invalid date formats
+  const validDays = days.filter((day): day is ContributionDay => {
+    if (day === null || day === undefined) return false;
+    if (!day.date || typeof day.date !== 'string' || day.date.trim() === '') return false;
+    // Validate YYYY-MM-DD format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day.date)) return false;
+    // Ensure it's a valid date
+    const dateObj = new Date(day.date);
+    return !isNaN(dateObj.getTime());
+  });
 
   if (validDays.length === 0) {
     return [];
   }
 
+  // Sort days chronologically
   const sorted = [...validDays].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
