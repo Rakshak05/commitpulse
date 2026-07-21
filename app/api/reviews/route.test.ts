@@ -13,12 +13,15 @@ vi.mock('@/lib/rate-limit', () => ({
 }));
 vi.mock('@/utils/getClientIp', () => ({ getClientIp: vi.fn().mockReturnValue('127.0.0.1') }));
 vi.mock('@/lib/security/csrf', () => ({ validateCSRF: vi.fn().mockReturnValue(null) }));
+export const mockCacheGet = vi.fn().mockResolvedValue(null);
+export const mockCacheSet = vi.fn().mockResolvedValue(undefined);
+
 vi.mock('@/lib/cache', () => ({
   DistributedCache: vi.fn().mockImplementation(function (
     this: Record<string, ReturnType<typeof vi.fn>>
   ) {
-    this.get = vi.fn().mockResolvedValue(null);
-    this.set = vi.fn().mockResolvedValue(undefined);
+    this.get = mockCacheGet;
+    this.set = mockCacheSet;
   }),
 }));
 
@@ -122,6 +125,13 @@ describe('GET /api/reviews (admin)', () => {
     expect(data.reviews).toEqual([]);
     process.env.MONGODB_URI = orig;
   });
+
+  it('returns 500 on internal server error in GET', async () => {
+    mockVerifyAdmin.mockReturnValue(null);
+    mockCount.mockRejectedValueOnce(new Error('Test DB Error'));
+    const res = await GET(adminReq('GET', '/reviews'));
+    expect(res.status).toBe(500);
+  });
 });
 
 describe('POST /api/reviews', () => {
@@ -158,9 +168,66 @@ describe('POST /api/reviews', () => {
   });
 
   it('returns 503 at capacity', async () => {
-    mockCount.mockResolvedValue(5000);
+    mockCount.mockResolvedValueOnce(5000);
     const res = await POST(adminReq('POST', '/reviews', body));
     expect((await res.json()).message).toContain('capacity');
+  });
+
+  it('returns 500 if MONGODB_URI is not set in production', async () => {
+    const orig = process.env.MONGODB_URI;
+    const origNodeEnv = process.env.NODE_ENV;
+    delete process.env.MONGODB_URI;
+    process.env.NODE_ENV = 'production';
+    const res = await POST(adminReq('POST', '/reviews', body));
+    expect(res.status).toBe(500);
+    process.env.MONGODB_URI = orig;
+    process.env.NODE_ENV = origNodeEnv;
+  });
+
+  it('returns 200 bypassing if MONGODB_URI is not set in development', async () => {
+    const orig = process.env.MONGODB_URI;
+    const origNodeEnv = process.env.NODE_ENV;
+    delete process.env.MONGODB_URI;
+    process.env.NODE_ENV = 'development';
+    const res = await POST(adminReq('POST', '/reviews', body));
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.success).toBe(true);
+    expect(data.message).toContain('bypassed');
+    process.env.MONGODB_URI = orig;
+    process.env.NODE_ENV = origNodeEnv;
+  });
+
+  it('returns 500 on internal server error', async () => {
+    mockCount.mockRejectedValueOnce(new Error('Test DB Error'));
+    const res = await POST(adminReq('POST', '/reviews', body));
+    expect(res.status).toBe(500);
+  });
+
+  it('returns 429 if global rate limit is exceeded', async () => {
+    const { notifyRateLimiter } = await import('@/lib/rate-limit');
+    // @ts-expect-error mock
+    notifyRateLimiter.checkWithResult.mockResolvedValueOnce({
+      success: false,
+      limit: 5,
+      remaining: 0,
+      reset: Date.now() + 60000,
+    });
+    const res = await POST(adminReq('POST', '/reviews', body));
+    expect(res.status).toBe(429);
+  });
+
+  it('returns 400 for malformed JSON request body', async () => {
+    const req = adminReq('POST', '/reviews');
+    req.json = vi.fn().mockRejectedValue(new Error('malformed'));
+    const res = await POST(req);
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 429 if write cache cooldown is active', async () => {
+    mockCacheGet.mockResolvedValueOnce(Date.now() - 1000); // 1 second ago
+    const res = await POST(adminReq('POST', '/reviews', body));
+    expect(res.status).toBe(429);
   });
 });
 
@@ -203,6 +270,47 @@ describe('PATCH /api/reviews/[id]', () => {
     });
     expect(res.status).toBe(404);
   });
+
+  it('returns 400 for malformed JSON body', async () => {
+    mockVerifyAdmin.mockReturnValue(null);
+    const req = adminReq('PATCH', '/reviews/abc123');
+    // Force json() to throw
+    req.json = vi.fn().mockRejectedValue(new Error('malformed'));
+    const res = await PATCH(req, {
+      params: Promise.resolve({ id: 'abc123' }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 400 when approved is not a boolean', async () => {
+    mockVerifyAdmin.mockReturnValue(null);
+    const res = await PATCH(adminReq('PATCH', '/reviews/abc123', { approved: 'yes' }), {
+      params: Promise.resolve({ id: 'abc123' }),
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 500 when MONGODB_URI is not set', async () => {
+    mockVerifyAdmin.mockReturnValue(null);
+    const orig = process.env.MONGODB_URI;
+    delete process.env.MONGODB_URI;
+    const res = await PATCH(adminReq('PATCH', '/reviews/abc123', { approved: true }), {
+      params: Promise.resolve({ id: 'abc123' }),
+    });
+    expect(res.status).toBe(500);
+    process.env.MONGODB_URI = orig;
+  });
+
+  it('returns 500 on internal server error', async () => {
+    mockVerifyAdmin.mockReturnValue(null);
+    mockFindByIdUpdate.mockImplementationOnce(() => {
+      throw new Error('DB error');
+    });
+    const res = await PATCH(adminReq('PATCH', '/reviews/abc123', { approved: true }), {
+      params: Promise.resolve({ id: 'abc123' }),
+    });
+    expect(res.status).toBe(500);
+  });
 });
 
 describe('DELETE /api/reviews/[id]', () => {
@@ -225,6 +333,28 @@ describe('DELETE /api/reviews/[id]', () => {
       params: Promise.resolve({ id: 'x' }),
     });
     expect(res.status).toBe(404);
+  });
+
+  it('returns 500 when MONGODB_URI is not set', async () => {
+    mockVerifyAdmin.mockReturnValue(null);
+    const orig = process.env.MONGODB_URI;
+    delete process.env.MONGODB_URI;
+    const res = await DELETE(adminReq('DELETE', '/reviews/abc123'), {
+      params: Promise.resolve({ id: 'abc123' }),
+    });
+    expect(res.status).toBe(500);
+    process.env.MONGODB_URI = orig;
+  });
+
+  it('returns 500 on internal server error', async () => {
+    mockVerifyAdmin.mockReturnValue(null);
+    mockFindByIdDelete.mockImplementationOnce(() => {
+      throw new Error('DB error');
+    });
+    const res = await DELETE(adminReq('DELETE', '/reviews/abc123'), {
+      params: Promise.resolve({ id: 'abc123' }),
+    });
+    expect(res.status).toBe(500);
   });
 });
 
