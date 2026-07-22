@@ -50,7 +50,8 @@ vi.mock('next/server', async (importOriginal) => {
   const actual = await importOriginal<typeof import('next/server')>();
   class MockNextRequest extends actual.NextRequest {
     constructor(input: URL | RequestInfo, init?: RequestInit) {
-      super(input, init);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      super(input, init as any);
       if (!this.headers.has('origin') && !this.headers.has('referer')) {
         this.headers.set('origin', 'https://commitpulse.vercel.app');
       }
