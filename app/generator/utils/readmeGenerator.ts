@@ -1,5 +1,6 @@
 import { getTechById } from '../data/technologies';
 import { getSocialById } from '../data/socials';
+import { validateSocialHandle, sanitizeSocialUrl } from './urlSanitizer';
 import type { GeneratorState } from '../types';
 
 const BADGE_BASE = 'https://commitpulse.vercel.app/api/streak';
@@ -126,7 +127,12 @@ export function generateReadme(state: GeneratorState): string {
   }
 
   // 3. Socials Section
-  const activeSocials = state.selectedSocials.filter((id) => state.socialLinks[id]?.trim());
+  const activeSocials = state.selectedSocials.filter((id) => {
+    const val = state.socialLinks[id];
+    if (!val?.trim()) return false;
+    const sanitized = sanitizeSocialUrl(id, val);
+    return validateSocialHandle(id, sanitized);
+  });
 
   if (activeSocials.length > 0) {
     const socialLines: string[] = ['## 🌐 Connect With Me', '', '<div align="center">'];
@@ -135,13 +141,14 @@ export function generateReadme(state: GeneratorState): string {
       .map((id) => {
         const social = getSocialById(id);
         if (!social) return null;
-        const url = state.socialLinks[id];
+        const val = state.socialLinks[id];
+        const sanitized = sanitizeSocialUrl(id, val);
         const resolvedUrl =
           social.id === 'email'
-            ? `mailto:${url.replace(/^mailto:/i, '')}`
-            : url.startsWith('http')
-              ? url
-              : `${social.baseUrl}${url}`;
+            ? `mailto:${sanitized.replace(/^mailto:/i, '')}`
+            : sanitized.startsWith('http')
+              ? sanitized
+              : `${social.baseUrl}${sanitized}`;
 
         if (social.type === 'simpleicon' && social.siSlug) {
           return [
