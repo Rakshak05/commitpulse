@@ -63,6 +63,16 @@ vi.mock('next/server', async (importOriginal) => {
   };
 });
 
+const OriginalRequest = globalThis.Request;
+globalThis.Request = class extends OriginalRequest {
+  constructor(input: RequestInfo | URL, init?: RequestInit) {
+    super(input, init);
+    if (!this.headers.has('origin') && !this.headers.has('referer')) {
+      this.headers.set('origin', 'https://commitpulse.vercel.app');
+    }
+  }
+} as typeof Request;
+
 // Custom Storage prototype override to fix Node.js v25+ experimental localStorage incompatibility with JSDOM
 if (typeof window !== 'undefined' && typeof window.Storage !== 'undefined') {
   const stores = new WeakMap<object, Map<string, string>>();
