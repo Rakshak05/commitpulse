@@ -1176,6 +1176,10 @@ async function fetchContributionsUncached(
       `[CommitPulse API] Empty profile or null repository nodes discovered for user "${username}". Falling back to baseline collection.`
     );
     repoContributions = [];
+  } else {
+    repoContributions = repoContributions.filter(
+      (c) => c && c.repository !== null && c.repository !== undefined
+    );
   }
   // 🔼 END OF CHANGE 🔼
 
@@ -1809,8 +1813,11 @@ export async function fetchContributedRepos(
 
       const connection = data?.data?.user?.repositoriesContributedTo;
       const nodes = connection?.nodes ?? [];
+      const validNodes = nodes.filter(
+        (node): node is ContributedRepo => node !== null && node !== undefined
+      );
 
-      allRepos.push(...nodes);
+      allRepos.push(...validNodes);
 
       const pageInfo = connection?.pageInfo;
 
@@ -2350,8 +2357,10 @@ export async function getFullDashboardData(username: string, options: FetchOptio
 
   const langCounts: Record<string, number> = {};
   repoContributions.forEach((c) => {
-    const l = c.repository.primaryLanguage?.name;
-    if (l) langCounts[l] = (langCounts[l] || 0) + c.contributions.totalCount;
+    const l = c?.repository?.primaryLanguage?.name;
+    if (l && c?.contributions?.totalCount) {
+      langCounts[l] = (langCounts[l] || 0) + c.contributions.totalCount;
+    }
   });
   const total = Object.values(langCounts).reduce((a, b) => a + b, 0);
   const languages = Object.entries(langCounts)
@@ -2804,10 +2813,17 @@ export async function fetchCommitHourDistribution(
       const data = await res.json();
       const repos =
         data?.data?.user?.contributionsCollection?.commitContributionsByRepository ?? [];
-      topRepos = repos.map((r: { repository: { owner: { login: string }; name: string } }) => ({
-        owner: r.repository.owner.login,
-        name: r.repository.name,
-      }));
+      topRepos = repos
+        .filter(
+          (
+            r: { repository: { owner: { login: string } | null; name: string } | null } | null
+          ): r is { repository: { owner: { login: string }; name: string } } =>
+            !!(r && r.repository && r.repository.owner && r.repository.owner.login)
+        )
+        .map((r) => ({
+          owner: r.repository.owner.login,
+          name: r.repository.name,
+        }));
     }
   } catch {
     // silent — return empty distribution
@@ -2938,10 +2954,17 @@ export async function fetchCommitPunchCard(
       const data = await res.json();
       const repos =
         data?.data?.user?.contributionsCollection?.commitContributionsByRepository ?? [];
-      topRepos = repos.map((r: { repository: { owner: { login: string }; name: string } }) => ({
-        owner: r.repository.owner.login,
-        name: r.repository.name,
-      }));
+      topRepos = repos
+        .filter(
+          (
+            r: { repository: { owner: { login: string } | null; name: string } | null } | null
+          ): r is { repository: { owner: { login: string }; name: string } } =>
+            !!(r && r.repository && r.repository.owner && r.repository.owner.login)
+        )
+        .map((r) => ({
+          owner: r.repository.owner.login,
+          name: r.repository.name,
+        }));
     }
   } catch {
     // silent

@@ -131,7 +131,7 @@ export interface RepoContribution {
     name: string;
     nameWithOwner?: string;
     primaryLanguage: { name: string } | null;
-  };
+  } | null;
   contributions: { totalCount: number };
 }
 
