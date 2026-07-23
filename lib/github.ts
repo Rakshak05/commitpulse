@@ -2820,7 +2820,7 @@ export async function fetchCommitHourDistribution(
           ): r is { repository: { owner: { login: string }; name: string } } =>
             !!(r && r.repository && r.repository.owner && r.repository.owner.login)
         )
-        .map((r) => ({
+        .map((r: { repository: { owner: { login: string }; name: string } }) => ({
           owner: r.repository.owner.login,
           name: r.repository.name,
         }));
@@ -2961,7 +2961,7 @@ export async function fetchCommitPunchCard(
           ): r is { repository: { owner: { login: string }; name: string } } =>
             !!(r && r.repository && r.repository.owner && r.repository.owner.login)
         )
-        .map((r) => ({
+        .map((r: { repository: { owner: { login: string }; name: string } }) => ({
           owner: r.repository.owner.login,
           name: r.repository.name,
         }));
